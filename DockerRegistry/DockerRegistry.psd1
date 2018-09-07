@@ -1,6 +1,6 @@
 @{
     RootModule = 'DockerRegistry.psm1'
-    ModuleVersion = '0.9'
+    ModuleVersion = '0.6'
     GUID = 'ca2ddc97-8586-45cd-98a4-047d9542f5e5'
     Author = 'Nicholas Dille'
     # CompanyName = ''
@@ -23,7 +23,7 @@
     #AliasesToExport = '*'
     #FormatsToProcess = ''
     RequiredModules = @(
-        'Helpers'
+        @{ ModuleName = 'Helpers'; RequiredVersion = '0.4.0.24' }
     )
     PrivateData = @{
         PSData = @{
