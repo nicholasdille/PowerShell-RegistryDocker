@@ -53,7 +53,7 @@ function Test-DockerImageBlob {
             $Authentication = "$($Credential.UserName):$Token" | ConvertTo-Base64
             $Params.Headers.Add('Authorization', "Basic $Authentication")
         }
-        $Response = Invoke-WebRequest @Params -ErrorAction SilentlyContinue
+        Invoke-WebRequest @Params -ErrorAction SilentlyContinue | Out-Null
 
     } catch [System.Net.WebException] {
         $false
