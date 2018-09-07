@@ -1,5 +1,5 @@
 function New-DockerImageManifest {
-    [CmdletBinding(DefaultParameterSetName='Unauthenticated')]
+    [CmdletBinding(DefaultParameterSetName='Unauthenticated', SupportsShouldProcess, ConfirmImpact='Medium')]
     param(
         [ValidateNotNullOrEmpty()]
         [string]
@@ -44,31 +44,44 @@ function New-DockerImageManifest {
         $ManifestVersion = 'v2'
     )
 
-    $ContentType = 'application/vnd.docker.distribution.manifest.v2+json'
-    if ($ManifestVersion -eq 'v1') {
-        $ContentType = 'application/vnd.docker.distribution.manifest.v1+json'
-    }
-
-    $Params = @{
-        UseBasicParsing    = $true
-        Method             = 'Put'
-        Uri                = "$Registry/v2/$Repository/manifests/$Tag"
-        Headers            = @{
-            'Content-Type' = $ContentType
+    begin {
+        if (-not $PSBoundParameters.ContainsKey('Confirm')) {
+            $ConfirmPreference = $PSCmdlet.SessionState.PSVariable.GetValue('ConfirmPreference')
         }
-        Body               = $Manifest
-    }
-    if ($PSCmdlet.ParameterSetName -ieq 'BearerToken') {
-        $Params.Headers.Add('Authorization', "Bearer $Token")
-
-    } elseif ($PSCmdlet.ParameterSetName -ieq 'HeaderApiKey') {
-        $Params.Headers.Add($HeaderKey, $HeaderValue)
-
-    } elseif ($PSCmdlet.ParameterSetName -ieq 'BasicAuthentication') {
-        $Token = Get-PlaintextFromSecureString -SecureString $Credential.Password
-        $Authentication = "$($Credential.UserName):$Token" | ConvertTo-Base64
-        $Params.Headers.Add('Authorization', "Basic $Authentication")
+        if (-not $PSBoundParameters.ContainsKey('WhatIf')) {
+            $WhatIfPreference = $PSCmdlet.SessionState.PSVariable.GetValue('WhatIfPreference')
+        }
     }
 
-    Invoke-RestMethod @Params
+    process {
+        $ContentType = 'application/vnd.docker.distribution.manifest.v2+json'
+        if ($ManifestVersion -eq 'v1') {
+            $ContentType = 'application/vnd.docker.distribution.manifest.v1+json'
+        }
+
+        $Params = @{
+            UseBasicParsing    = $true
+            Method             = 'Put'
+            Uri                = "$Registry/v2/$Repository/manifests/$Tag"
+            Headers            = @{
+                'Content-Type' = $ContentType
+            }
+            Body               = $Manifest
+        }
+        if ($PSCmdlet.ParameterSetName -ieq 'BearerToken') {
+            $Params.Headers.Add('Authorization', "Bearer $Token")
+
+        } elseif ($PSCmdlet.ParameterSetName -ieq 'HeaderApiKey') {
+            $Params.Headers.Add($HeaderKey, $HeaderValue)
+
+        } elseif ($PSCmdlet.ParameterSetName -ieq 'BasicAuthentication') {
+            $Token = Get-PlaintextFromSecureString -SecureString $Credential.Password
+            $Authentication = "$($Credential.UserName):$Token" | ConvertTo-Base64
+            $Params.Headers.Add('Authorization', "Basic $Authentication")
+        }
+
+        if ($Force -or $PSCmdlet.ShouldProcess("Create new manifest for repository $Repository with tag $Tag in registry $Registry?")) {
+            Invoke-RestMethod @Params
+        }
+    }
 }

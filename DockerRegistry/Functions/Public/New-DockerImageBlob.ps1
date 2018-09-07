@@ -1,5 +1,5 @@
 function New-DockerImageBlob {
-    [CmdletBinding(DefaultParameterSetName='Unauthenticated')]
+    [CmdletBinding(DefaultParameterSetName='Unauthenticated', SupportsShouldProcess, ConfirmImpact='Medium')]
     param(
         [ValidateNotNullOrEmpty()]
         [string]
@@ -40,42 +40,55 @@ function New-DockerImageBlob {
         $ContentType = 'application/octet-string'
     )
 
-    $Params = @{
-        UseBasicParsing = $true
-        Method          = 'Post'
-        Uri             = "$Registry/v2/$Repository/blobs/uploads/"
-        Headers         = @{}
-    }
-    if ($PSCmdlet.ParameterSetName -ieq 'BearerToken') {
-        $Params.Headers.Add('Authorization', "Bearer $Token")
-
-    } elseif ($PSCmdlet.ParameterSetName -ieq 'HeaderApiKey') {
-        $Params.Headers.Add($HeaderKey, $HeaderValue)
-
-    } elseif ($PSCmdlet.ParameterSetName -ieq 'BasicAuthentication') {
-        $Token = Get-PlaintextFromSecureString -SecureString $Credential.Password
-        $Authentication = "$($Credential.UserName):$Token" | ConvertTo-Base64
-        $Params.Headers.Add('Authorization', "Basic $Authentication")
+    begin {
+        if (-not $PSBoundParameters.ContainsKey('Confirm')) {
+            $ConfirmPreference = $PSCmdlet.SessionState.PSVariable.GetValue('ConfirmPreference')
+        }
+        if (-not $PSBoundParameters.ContainsKey('WhatIf')) {
+            $WhatIfPreference = $PSCmdlet.SessionState.PSVariable.GetValue('WhatIfPreference')
+        }
     }
 
-    $UuidResponse = Invoke-WebRequest @Params
-    $Location = $UuidResponse.Headers.Location
-    Write-Verbose ('Using UUID {0} for uploading to {1}' -f $Uuid, $Repository)
+    process {
+        $Params = @{
+            UseBasicParsing = $true
+            Method          = 'Post'
+            Uri             = "$Registry/v2/$Repository/blobs/uploads/"
+            Headers         = @{}
+        }
+        if ($PSCmdlet.ParameterSetName -ieq 'BearerToken') {
+            $Params.Headers.Add('Authorization', "Bearer $Token")
 
-    $Digest = 'sha256:'
-    $DataBytes = ConvertTo-ByteArray -Encoding ASCII -Data $Data
-    $Digest += Get-StringHash -Algorithm SHA256 -Encoding ASCII -Data $DataBytes
+        } elseif ($PSCmdlet.ParameterSetName -ieq 'HeaderApiKey') {
+            $Params.Headers.Add($HeaderKey, $HeaderValue)
 
-    Write-Verbose ('Uploading data of length {0} with digest {1}' -f $Data.Length, $Digest)
-    $Params.Method = 'Put'
-    $Params.Uri    = "$Location&digest=$Digest"
-    $Params.Body   = $Data
-    $Params.Headers.Add('Content-Length', $Data.Length)
-    $Params.Headers.Add('Content-Type', $ContentType)
-    $Response = Invoke-WebRequest @Params
-    if ($Response.StatusCode -ne 201) {
-        throw ('Something went wrong uploading the blob. Status code {0} with message <{1}>.' -f $Response.StatusCode, $Response.StatusDescription)
-    } else {
-        Write-Verbose ('Blob successfully uploaded with digest {0}' -f $Response.Headers.'Docker-Content-Digest')
+        } elseif ($PSCmdlet.ParameterSetName -ieq 'BasicAuthentication') {
+            $Token = Get-PlaintextFromSecureString -SecureString $Credential.Password
+            $Authentication = "$($Credential.UserName):$Token" | ConvertTo-Base64
+            $Params.Headers.Add('Authorization', "Basic $Authentication")
+        }
+
+        if ($Force -or $PSCmdlet.ShouldProcess("Create new blob for repository $Repository in registry $Registry?")) {
+            $UuidResponse = Invoke-WebRequest @Params
+            $Location = $UuidResponse.Headers.Location
+            Write-Verbose ('Using UUID {0} for uploading to {1}' -f $Uuid, $Repository)
+
+            $Digest = 'sha256:'
+            $DataBytes = ConvertTo-ByteArray -Encoding ASCII -Data $Data
+            $Digest += Get-StringHash -Algorithm SHA256 -Encoding ASCII -Data $DataBytes
+
+            Write-Verbose ('Uploading data of length {0} with digest {1}' -f $Data.Length, $Digest)
+            $Params.Method = 'Put'
+            $Params.Uri    = "$Location&digest=$Digest"
+            $Params.Body   = $Data
+            $Params.Headers.Add('Content-Length', $Data.Length)
+            $Params.Headers.Add('Content-Type', $ContentType)
+            $Response = Invoke-WebRequest @Params
+            if ($Response.StatusCode -ne 201) {
+                throw ('Something went wrong uploading the blob. Status code {0} with message <{1}>.' -f $Response.StatusCode, $Response.StatusDescription)
+            } else {
+                Write-Verbose ('Blob successfully uploaded with digest {0}' -f $Response.Headers.'Docker-Content-Digest')
+            }
+        }
     }
 }
