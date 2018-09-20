@@ -1,6 +1,10 @@
 # Release Notes
 
-## 0.7.0.4
+## 0.7.4.5
+
+- Switched to four digit versions (major.minor.patch.build)
+
+## 0.7.4
 
 - Added remote tagging
 
