@@ -9,6 +9,7 @@
     PowerShellVersion = '5.0'
     FunctionsToExport = @(
         'Add-DockerImageLayer'
+        'Copy-DockerImage'
         'Get-DockerImageBlob'
         'Get-DockerImageManifest'
         'Get-DockerImageBlob'
