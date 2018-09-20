@@ -1,6 +1,6 @@
 @{
     RootModule = 'DockerRegistry.psm1'
-    ModuleVersion = '0.7.1'
+    ModuleVersion = '0.7.5'
     GUID = 'ca2ddc97-8586-45cd-98a4-047d9542f5e5'
     Author = 'Nicholas Dille'
     # CompanyName = ''
