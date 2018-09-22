@@ -13,6 +13,7 @@
         'Get-DockerImageBlob'
         'Get-DockerImageManifest'
         'Get-DockerImageBlob'
+        'Get-DockerImageTag'
         'Get-DockerRegistryToken'
         'Merge-DockerImageLayer'
         'New-DockerImageBlob'
