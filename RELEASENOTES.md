@@ -1,6 +1,6 @@
 # Release Notes
 
-## 0.7.7.11
+## 0.7.7.14
 
 - Fixed function name for `Copy-DockerImage`
 
