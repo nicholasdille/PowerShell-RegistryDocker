@@ -1,4 +1,4 @@
-function Get-DockerImage {
+function Copy-DockerImage {
     [CmdletBinding(DefaultParameterSetName='Unauthenticated')]
     param(
         [ValidateNotNullOrEmpty()]
