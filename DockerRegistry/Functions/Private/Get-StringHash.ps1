@@ -5,10 +5,6 @@ function Get-StringHash {
         [string]
         $Algorithm = 'SHA256',
 
-        [ValidateSet('ASCII', 'UTF8')]
-        [string]
-        $Encoding = 'ASCII',
-
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [byte[]]
